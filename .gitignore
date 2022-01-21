@@ -1,0 +1,11 @@
+**/obj
+**/bin
+*.cache
+.vs/*
+out/
+.DS_Store
+.ionide
+.vscode
+.idea
+**/*DotSettings.user
+**/*.pem
