@@ -180,8 +180,6 @@ client registration, we have to manually track the state metadata, provided
 during onboarding based on the [Testing and
 Onboarding](https://www.yes.com/docs/rp-devguide/latest/ONBOARDING/index.html#_client_id_set_up).
 
-### Client metadata
-
 The set of claims are described in [Verified and Unverified
 Data](https://www.yes.com/docs/rp-devguide/latest/IDENTITY/index.html#_verified_and_unverified_data). Also note that
 
