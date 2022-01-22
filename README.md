@@ -1,4 +1,4 @@
-# German Yes IdentityProvider Integration
+# German yes identity provider integration
 
 Sample identity relying party conforming to the [integration
 documentation](https://www.yes.com/docs/rp-devguide/latest/IDENTITY) and
