@@ -1,6 +1,6 @@
 # German Yes IdentityProvider Integration
 
-Example identity relying party conforming to the [integration
+Sample identity relying party conforming to the [integration
 documentation](https://www.yes.com/docs/rp-devguide/latest/IDENTITY) and
 inspired by the [yes Python sample](https://github.com/yescom/pyyes).
 
@@ -43,8 +43,11 @@ the account chooser for testing and development, go to
 
 ```
 Configuration
+
 https://testidp.sandbox.yes.com/issuer/10000002/.well-known/openid-configuration
+
 ID token
+
 {
   "sub": "f647f683-e46d-43bd-bc76-526d93429b86",
   "verified_claims": {
@@ -107,7 +110,9 @@ ID token
   "family_name": "Family001",
   "email": "test001@platform.yes.com"
 }
+
 UserInfo
+
 {
   "sub": "f647f683-e46d-43bd-bc76-526d93429b86",
   "verified_claims": {
