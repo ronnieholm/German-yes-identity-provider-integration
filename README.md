@@ -171,6 +171,147 @@ UserInfo
 }
 ```
 
+## Integration notes
+
+### Maintaining client registration metadata
+
+Yes doesn't provide a portal to view and update client metadata. For a non-demo
+client registration, we have to manually track the state metadata, provided
+during onboarding based on the [Testing and
+Onboarding](https://www.yes.com/docs/rp-devguide/latest/ONBOARDING/index.html#_client_id_set_up).
+
+### Client metadata
+
+The set of claims are described in [Verified and Unverified
+Data](https://www.yes.com/docs/rp-devguide/latest/IDENTITY/index.html#_verified_and_unverified_data). Also note that
+
+- While unclear from yes documentation and identity provider metadata, actual
+  use shows that every verified claim is also an unverified claim.
+- Relying party implementation doesn't support the legacy yes version 1.x claims
+  request format. Only yes version 2.x claims request format is supported.
+- Requested claims in `Domain.fs` are based on `claims_supported` identity
+  provider metadata from
+  [testidp1](https://testidp.sandbox.yes.com/issuer/10000001/.well-known/openid-configuration).
+  We assume claims from this identity provider represent real-world claims.
+- The `sub` and `iss` claims in combination make up a pseudonymous user
+  identifier. They're always present in the claims response (as part of the OIDC
+  standard set of claims). Therefore, these claims are left out of requested
+  claims. The `(sub, iss)` tuple is unique in the yes ecosystem and is what
+  relying parties must use as a userid.
+- Claims `email_verified`, `phone_number_verified`, `birth_family_name`,
+  `birth_middle_name`, `birth_given_name` are missing from [Verified and
+  Unverified
+  Data](https://www.yes.com/docs/rp-devguide/latest/IDENTITY/index.html#_verified_and_unverified_data),
+  but listed as part of identity provider metadata. That's because
+  `email_verified` and `phone_number_verified` are OpenID standard claims as per
+  [OpenID Connect Core 1.0, Section 5.1 Standard
+  Claims](https://openid.net/specs/openid-connect-core-1_0.html#StandardClaims )
+  and `birth_family_name`, `birth_middle_name`, and `birth_given` are part of
+  [OpenID Connect for Identity Assurance 1.0, Section 4.1 Additional Claims
+  about
+  End-Users](https://openid.net/specs/openid-connect-4-identity-assurance-1_0.html#section-4.1).
+  (partially authored by yes.com).
+- For the Account Chooser Redirect URI, https://localhost is allowed, but only
+  one URI per client ID is allowed.
+- For OpenID Connect Redirect URI, multiple URLs are allowed, but
+  https://localhost is disallowed. For localhost, only the http protocol is
+  currently (January 22, 2022) supported, possibly due to a too strict
+  interpretation of [OAuth 2.0 for Native Apps, Loopback Redirect
+  Considerations](https://datatracker.ietf.org/doc/html/rfc8252#section-8.3).
+  yes is working on fix to allow the https protocol with localhost which would
+  simplify relying party development.
+- *Undocumented*: by default actual client registrations (but not the sandbox
+  client) has branding for bank test identity providers disabled. Yes partner
+  support can enable branding per client ID basis. Branding affects automated
+  tests as HTML elements and the inclusion of JavaScript differs.
+- *Undocumented*: according to yes partner support, for both regular and
+  verified claims, `birth_family_name`, `birth_middle_name`, and
+  `birth_given_name` are advertised in documentation and identity provider
+  metadata, but are not currently (January 22, 2022) supported by bank identity
+  provider. If customers include these claims as part of an actual client
+  registration, Yes partner support will remove those from the client's allowed
+  claims. This also means that the sandbox client doesn't support these claims,
+  and that test identity providers will respond with an error if these claims
+  requested. From the error message, you'd never guess this to be the cause:
+
+The following claims request, which must be provided to yes partner support as
+part of an actual client registration, returns every supported 2.x claims from
+both the the ID token and through the userinfo endpoint.
+
+```json
+{
+    "id_token": { 
+        "txn": null,
+        "email": null,
+        "email_verified": null,
+        "phone_number": null,
+        "phone_number_verified": null,
+        "given_name": null,
+        "family_name": null,
+        "birthdate": null,
+        "address": null,
+        "salutation": null,
+        "title": null,
+        "place_of_birth": null,
+        "gender": null,
+        "nationalities": null,
+        "https://www.yes.com/claims/tax_id": null,
+        "https://www.yes.com/claims/preferred_iban": null,
+        "verified_claims": {
+            "verification": {
+                "trust_framework": null 
+            },
+            "claims": {
+                "given_name": null,
+                "family_name": null,
+                "birthdate": null,
+                "place_of_birth": null,
+                "nationalities": null,
+                "address": null
+            }
+        }
+    },
+    "userinfo": { 
+        "txn": null,
+        "email": null,
+        "email_verified": null,
+        "phone_number": null,
+        "phone_number_verified": null,
+        "given_name": null,
+        "family_name": null,
+        "birthdate": null,
+        "address": null,
+        "salutation": null,
+        "title": null,
+        "place_of_birth": null,
+        "gender": null,
+        "nationalities": null,
+        "https://www.yes.com/claims/tax_id": null,
+        "https://www.yes.com/claims/preferred_iban": null,
+        "verified_claims": {
+            "verification": {
+                "trust_framework": null 
+            },
+            "claims": {
+                "given_name": null,
+                "family_name": null,
+                "birthdate": null,
+                "place_of_birth": null,
+                "nationalities": null,
+                "address": null
+            }
+        }
+    }
+}
+```
+
+### Debugging
+
+Out of the box, Fiddler only supports the authentication flow up until code
+exchange for tokens. Code exchange and any subsequent use of the access token
+requires [mutual TLS
+configuration](https://docs.telerik.com/fiddler/configure-fiddler/tasks/respondwithclientcert).
+
 ## Resources
 
 - [Demo client certificates, client_id, test IdPs, and test users](https://yes.com/docs/rp-devguide/latest/ONBOARDING).
