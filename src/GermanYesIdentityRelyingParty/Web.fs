@@ -30,7 +30,7 @@ type HomeController () =
     </head>
     <p>Please identify with your bank</p>
     <form action="/yes/start">
-        <button type="submit">yes®</button>
+        <button id="login" type="submit">yes®</button>
     </form>
 </html>""")
              
@@ -91,13 +91,13 @@ type YesController () =
             Session.save base.HttpContext.Session sessionState'
             let issuer = sessionState.Issuer.Value.AbsoluteUri
             responseBuilder.Append("<h3>Configuration</h3>") |> ignore
-            responseBuilder.Append($"<a href='%s{issuer + Dsl.WellKnownOpenIdConfiguration}'><pre>%s{issuer + Dsl.WellKnownOpenIdConfiguration}</pre></a>") |> ignore                       
+            responseBuilder.Append($"<a href='%s{issuer + Dsl.WellKnownOpenIdConfiguration}'><pre id='wellKnownOpenIdConfiguration'>%s{issuer + Dsl.WellKnownOpenIdConfiguration}</pre></a>") |> ignore                       
 
             responseBuilder.Append("<h3>ID token</h3>") |> ignore
             match Dsl.sendTokenRequest sessionState' with
             | Ok (sessionState', oidcToken) ->                
                 Session.save base.HttpContext.Session sessionState'
-                responseBuilder.Append($"<pre>%s{oidcToken.ToString()}</pre>") |> ignore                
+                responseBuilder.Append($"<pre id='idToken'>%s{oidcToken.ToString()}</pre>") |> ignore 
             | Error e ->
                 responseBuilder.Append($"%A{e}") |> ignore
 
@@ -105,7 +105,7 @@ type YesController () =
             responseBuilder.Append("<h3>UserInfo</h3>") |> ignore
             match Dsl.sendUserInfoRequest sessionState with
             | Ok userInfo ->
-                responseBuilder.Append($"<pre>%s{userInfo.ToString()}</pre>") |> ignore                                
+                responseBuilder.Append($"<pre id='userInfo'>%s{userInfo.ToString()}</pre>") |> ignore                                
             | Error e ->
                 responseBuilder.Append($"%A{e}") |> ignore
             

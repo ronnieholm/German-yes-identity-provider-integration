@@ -230,7 +230,7 @@ Data](https://www.yes.com/docs/rp-devguide/latest/IDENTITY/index.html#_verified_
   registration, Yes partner support will remove those from the client's allowed
   claims. This also means that the sandbox client doesn't support these claims,
   and that test identity providers will respond with an error if these claims
-  requested. From the error message, you'd never guess this to be the cause:
+  requested. From the error message, you'd never guess this to be the cause.
 
 The following claims request, which must be provided to yes partner support as
 part of an actual client registration, returns every supported 2.x claims from

@@ -14,6 +14,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "SolutionFolder", "SolutionF
 EndProject
 Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "GermanYesIdentityRelyingParty", "src\GermanYesIdentityRelyingParty\GermanYesIdentityRelyingParty.fsproj", "{6A9D06C0-18A4-473A-A612-73F4E4232ACC}"
 EndProject
+Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "GermanYesIdentityRelyingParty.BrowserTests", "tests\GermanYesIdentityRelyingParty.BrowserTests\GermanYesIdentityRelyingParty.BrowserTests.fsproj", "{B662FF1F-7F61-475D-B8C5-0517F685F448}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -36,6 +38,18 @@ Global
 		{6A9D06C0-18A4-473A-A612-73F4E4232ACC}.Release|x64.Build.0 = Release|Any CPU
 		{6A9D06C0-18A4-473A-A612-73F4E4232ACC}.Release|x86.ActiveCfg = Release|Any CPU
 		{6A9D06C0-18A4-473A-A612-73F4E4232ACC}.Release|x86.Build.0 = Release|Any CPU
+		{B662FF1F-7F61-475D-B8C5-0517F685F448}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{B662FF1F-7F61-475D-B8C5-0517F685F448}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{B662FF1F-7F61-475D-B8C5-0517F685F448}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{B662FF1F-7F61-475D-B8C5-0517F685F448}.Debug|x64.Build.0 = Debug|Any CPU
+		{B662FF1F-7F61-475D-B8C5-0517F685F448}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{B662FF1F-7F61-475D-B8C5-0517F685F448}.Debug|x86.Build.0 = Debug|Any CPU
+		{B662FF1F-7F61-475D-B8C5-0517F685F448}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{B662FF1F-7F61-475D-B8C5-0517F685F448}.Release|Any CPU.Build.0 = Release|Any CPU
+		{B662FF1F-7F61-475D-B8C5-0517F685F448}.Release|x64.ActiveCfg = Release|Any CPU
+		{B662FF1F-7F61-475D-B8C5-0517F685F448}.Release|x64.Build.0 = Release|Any CPU
+		{B662FF1F-7F61-475D-B8C5-0517F685F448}.Release|x86.ActiveCfg = Release|Any CPU
+		{B662FF1F-7F61-475D-B8C5-0517F685F448}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
