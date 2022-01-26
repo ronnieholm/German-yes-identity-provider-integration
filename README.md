@@ -46,7 +46,7 @@ the account chooser for testing and development, go to
 ```
 Configuration
 
-https://testidp.sandbox.yes.com/issuer/10000002/.well-known/openid-configuration
+https://testidp.sandbox.yes.com/issuer/10000001/.well-known/openid-configuration
 
 ID token
 
@@ -89,7 +89,7 @@ ID token
     "postal_code": "10243"
   },
   "gender": "male",
-  "iss": "https://testidp.sandbox.yes.com/issuer/10000002",
+  "iss": "https://testidp.sandbox.yes.com/issuer/10000001",
   "phone_number_verified": true,
   "nationalities": [
     "DE"
