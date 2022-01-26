@@ -7,7 +7,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Compile Include="LoginTests.fs" />
+    <Compile Include="LoginFlowTests.fs" />
   </ItemGroup>
 
   <ItemGroup>
