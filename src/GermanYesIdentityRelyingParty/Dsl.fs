@@ -288,14 +288,13 @@ module Dsl =
                 handler.ClientCertificates.Add(tlsCertificate) |> ignore
                 use client = new HttpClient(handler)
                 client.DefaultRequestHeaders.Accept.Add(MediaTypeWithQualityHeaderValue("application/json"))
-                // TODO(rh): Rename to requestBody and responseBody instead of shadowing.
-                use body = new StringContent($"client_id=%s{clientId}&redirect_uri=%s{redirectUri}&grant_type=%s{grantType}&code=%s{code}", Encoding.UTF8, "application/x-www-form-urlencoded")
-                let response = client.PostAsync(tokenEndpoint, body).GetAwaiter().GetResult()
-                let body = response.Content.ReadAsStringAsync().GetAwaiter().GetResult()
+                use requestBody = new StringContent($"client_id=%s{clientId}&redirect_uri=%s{redirectUri}&grant_type=%s{grantType}&code=%s{code}", Encoding.UTF8, "application/x-www-form-urlencoded")
+                let response = client.PostAsync(tokenEndpoint, requestBody).GetAwaiter().GetResult()
+                let responseBody = response.Content.ReadAsStringAsync().GetAwaiter().GetResult()
                 match response.StatusCode with
                 | HttpStatusCode.BadRequest ->
                     // In accordance with the Relying Party Developer Guide, Section 3.7. Token Error Response.
-                    let body' = JObject.Parse(body)
+                    let body' = JObject.Parse(responseBody)
                     let error = body'.["error"].Value<string>()
                     let description =
                         if body'.["error_description"] <> null
@@ -303,10 +302,10 @@ module Dsl =
                         else None 
                     Error (TokenRequestFailed(error, description))
                 | HttpStatusCode.OK ->
-                    let sessionState' = { sessionState with Tokens = Some (JObject.Parse(body)) }
+                    let sessionState' = { sessionState with Tokens = Some (JObject.Parse(responseBody)) }
                     decodeAndValidateIdToken sessionState'
                     |> Result.bind (fun claims -> Ok (sessionState', claims))
-                | _ -> Error (YesSpecificationError(response.StatusCode, body))                                 
+                | _ -> Error (YesSpecificationError(response.StatusCode, responseBody))                                 
             | None -> failwith "Missing session state authorization code"
         | None -> failwith "Missing session state Oidc configuration"        
         
