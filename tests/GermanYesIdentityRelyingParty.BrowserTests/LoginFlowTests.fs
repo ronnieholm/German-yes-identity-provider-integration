@@ -13,7 +13,9 @@ module BrowserTests =
     open PuppeteerSharp        
 
     [<AutoOpen>]
-    module Steps =       
+    module Steps =
+        let timeout = 10000
+        
         type Context =
             { Browser: Browser
               Page: Page
@@ -52,7 +54,7 @@ module BrowserTests =
             task {
                 let! ctx = ctx
                 // Click "Accept all" cookie consent button
-                let! acceptAll = ctx.Page.WaitForSelectorAsync("button#c-p-bn", WaitForSelectorOptions(Timeout = 5000, Visible = true))
+                let! acceptAll = ctx.Page.WaitForSelectorAsync("button#c-p-bn", WaitForSelectorOptions(Timeout = timeout, Visible = true))
                 let! _ = acceptAll.ClickAsync()
                 return ctx }
             
@@ -62,7 +64,7 @@ module BrowserTests =
                 let! _ = ctx.Page.QuerySelectorAsync("input#input-bank-query")
                 let! _ = ctx.Page.TypeAsync("input#input-bank-query", idP)
                 // Wait until JavaScript populates the result list.
-                let! _ = ctx.Page.WaitForSelectorAsync(".ac-result-list-item", WaitForSelectorOptions(Timeout = 5000))
+                let! _ = ctx.Page.WaitForSelectorAsync(".ac-result-list-item", WaitForSelectorOptions(Timeout = timeout))
                 let! _ = ctx.Page.Keyboard.PressAsync("Enter")
                 let! _ = ctx.Page.WaitForSelectorAsync("button#button_submit_query:not([disabled])")
                 let! nextButton = ctx.Page.WaitForSelectorAsync("button#button_submit_query")
@@ -96,7 +98,7 @@ module BrowserTests =
         let confirmTwoFactorAuth ctx =
             task {
                 let! ctx = ctx
-                let! twoFactorLoginButton = ctx.Page.WaitForSelectorAsync("input#ui-second-factor-login-button", WaitForSelectorOptions(Timeout = 5000))
+                let! twoFactorLoginButton = ctx.Page.WaitForSelectorAsync("input#ui-second-factor-login-button", WaitForSelectorOptions(Timeout = timeout))
                 let! _ = twoFactorLoginButton.ClickAsync()
                 let! _ = ctx.Page.WaitForNavigationAsync()  
                 return ctx }
@@ -117,7 +119,7 @@ module BrowserTests =
             task {
                 let! ctx = ctx
                 // Labelled "yes" in the UI.
-                let! consentButton = ctx.Page.WaitForSelectorAsync("input#ui-consent-submit-button", WaitForSelectorOptions(Timeout=5000))
+                let! consentButton = ctx.Page.WaitForSelectorAsync("input#ui-consent-submit-button", WaitForSelectorOptions(Timeout = timeout))
                 let! _ = consentButton.ClickAsync()
                 let! _ = ctx.Page.WaitForNavigationAsync()
                 return ctx }
@@ -126,7 +128,7 @@ module BrowserTests =
             task {
                 let! ctx = ctx
                 // Labelled "No" in the UI.
-                let! declineButton = ctx.Page.WaitForSelectorAsync("input#ui-consent-cancel-button", WaitForSelectorOptions(Timeout = 5000))
+                let! declineButton = ctx.Page.WaitForSelectorAsync("input#ui-consent-cancel-button", WaitForSelectorOptions(Timeout = timeout))
                 let! _ = declineButton.ClickAsync()
                 let! _ = ctx.Page.WaitForNavigationAsync()
                 return ctx }        
