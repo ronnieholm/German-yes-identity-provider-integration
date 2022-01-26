@@ -24,11 +24,13 @@ Download the mutual TLS client certificate to enable calls to the
 
 With `cert.pem` and `key.pem` in place:
 
-    $ cd src/GermanYesIdentityRelyingParty
-    $ dotnet build
-    $ dotnet run
+    $ dotnet run --project src/GermanYesIdentityRelyingParty/GermanYesIdentityRelyingParty.fsproj 
 
-Go to the GermanYesIdentityRelyingParty login page at
+To run browser tests, in another terminal:
+
+    $ dotnet test
+
+Otherwise go to the GermanYesIdentityRelyingParty login page at
 [http://localhost:3000](http://localhost:3000) and click the yes button to
 initiate a identity flow using one of the [test banks and test
 users](https://yes.com/docs/rp-devguide/latest/ONBOARDING/#sandbox). For
