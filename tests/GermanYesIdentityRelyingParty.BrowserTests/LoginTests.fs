@@ -1,10 +1,12 @@
 ﻿module GermanYesIdentityRelyingParty.BrowserTests
 
-// In Chrome DevTools, locate an element like so:
+// These browser tests focus on testing the interactions between the relying party and the identity provider.
+// They don't aim to test features of the test identity provider itself.
+
+// In the Chrome DevTools Console, to locate an element:
 // $$('button#c-p-bn');
 
-// TODO: Browse through documentation: https://puppeteersharp.com/api/
-
+open System.Web
 open Xunit
 open PuppeteerSharp
 open Newtonsoft.Json.Linq
@@ -33,7 +35,6 @@ module BrowserSteps =
         }).Result
 
     let teardown ctx =
-        //System.Threading.Tasks.Task.Delay(5000).GetAwaiter().GetResult()
         ctx.Browser.CloseAsync().GetAwaiter().GetResult()
         ctx
 
@@ -47,13 +48,7 @@ module BrowserSteps =
     let cookieConsent ctx =
         (task {
             // Click "Accept all" cookie consent button
-            // 1000ms appear to be too little for the button to appear
-            // Click will often fail because while the accept button is present in the DOM, it's invisible.
-            // WaitForSelectorAsync doesn't take into account visibility unless query for an additional param similar to
-            // "button#button_submit_query:not([disabled])"
-            // ClickAsync() will check if the style attribute `visibility` is not `hidden`and if the element has a
-            // visible bounding box (https://stackoverflow.com/questions/47014724/click-visible-elements-using-puppeteer)
-            let! acceptAll = ctx.Page.WaitForSelectorAsync("button#c-p-bn", WaitForSelectorOptions(Timeout=3000, Visible = true))
+            let! acceptAll = ctx.Page.WaitForSelectorAsync("button#c-p-bn", WaitForSelectorOptions(Timeout=5000, Visible = true))
             let! _ = acceptAll.ClickAsync()
             return ctx
         }).Result
@@ -62,7 +57,7 @@ module BrowserSteps =
         (task {
             let! _ = ctx.Page.QuerySelectorAsync("input#input-bank-query")
             let! _ = ctx.Page.TypeAsync("input#input-bank-query", idP)
-            // Wait a little until JavaScript fires and populates the result list
+            // Wait until JavaScript populates the result list.
             let! _ = ctx.Page.WaitForSelectorAsync(".ac-result-list-item", WaitForSelectorOptions(Timeout=1000))
             let! _ = ctx.Page.Keyboard.PressAsync("Enter")
             let! _ = ctx.Page.WaitForSelectorAsync("button#button_submit_query:not([disabled])")
@@ -78,25 +73,60 @@ module BrowserSteps =
             let! _ = ctx.Page.TypeAsync("input#ui-login-username-input", username)
             let! loginButton = ctx.Page.QuerySelectorAsync("input#ui-login-submit-button")
             let! _ = loginButton.ClickAsync()
+            let! _ = ctx.Page.WaitForNavigationAsync()  
             return ctx
         }).Result
 
+    let selectOtherBank ctx =
+        (task {
+            assert (ctx.Page.Url.StartsWith("https://testidpui.sandbox.yes.com/services/authz/10000001"))
+            let! selectOtherBankButton = ctx.Page.QuerySelectorAsync("input#ui-login-select-another-bank-button")
+            // Causes post-back to relying party
+            // http://localhost:3000/yes/oidccb?iss=https://testidp.sandbox.yes.com/issuer/10000001&error=account_selection_requested&error_description=User_requested_to_select_another_account
+            // which then redirects to the account chooser, including the prompt parameter:
+            // https://accounts.sandbox.yes.com/?client_id=sandbox.yes.com:e85ff3bc-96f8-4ae7-b6b1-894d8dde9ebe&state=60f9f8b7-9eb3-480f-a1e2-7346720ade32&prompt=select_account
+            let! _ = selectOtherBankButton.ClickAsync()
+            let! _ = ctx.Page.WaitForNavigationAsync()            
+            return ctx
+        }).Result                
+            
     let confirmTwoFactorAuth ctx =
         (task {
             let! twoFactorLoginButton = ctx.Page.WaitForSelectorAsync("input#ui-second-factor-login-button", WaitForSelectorOptions(Timeout=5000))
             let! _ = twoFactorLoginButton.ClickAsync()
+            let! _ = ctx.Page.WaitForNavigationAsync()  
             return ctx
         }).Result
     
-    let consentSharingWithRelyingParty ctx =
+    let declineSecondFactorAuth ctx =
         (task {
-            // Labelled "yes" in the UI
-            let! consentButton = ctx.Page.WaitForSelectorAsync("input#ui-consent-submit-button", WaitForSelectorOptions(Timeout=5000))
-            let! _ = consentButton.ClickAsync()
-            // We're redirected back to http://localhost:3000/yes/oidccb?code=AXEIutTa6nVsE7C3LGX4-g.dSjpqUr5V5mTNlaVB5vmKA&iss=https://testidp.sandbox.yes.com/issuer/10000001
+            assert (ctx.Page.Url.StartsWith("https://testidpui.sandbox.yes.com/services/login"))
+            let! declineSecondFactorButton = ctx.Page.QuerySelectorAsync("input#ui-second-factor-decline-button")
+            // Causes post-back to relying party
+            // http://localhost:3000/yes/oidccb?error=access_denied&error_description=Access+denied+by+resource+owner+or+authorization+server&iss=https://testidp.sandbox.yes.com/issuer/10000001
+            // with a specific error and error_description and login flow terminates.
+            let! _ = declineSecondFactorButton.ClickAsync()
             let! _ = ctx.Page.WaitForNavigationAsync()
             return ctx
         }).Result
+    
+    let consentSharing ctx =
+        (task {
+            // Labelled "yes" in the UI.
+            let! consentButton = ctx.Page.WaitForSelectorAsync("input#ui-consent-submit-button", WaitForSelectorOptions(Timeout=5000))
+            let! _ = consentButton.ClickAsync()
+            let! _ = ctx.Page.WaitForNavigationAsync()
+            return ctx
+        }).Result
+        
+    let declineSharing ctx =
+        (task {
+            // Labelled "No" in the UI.
+            let! declineButton = ctx.Page.WaitForSelectorAsync("input#ui-consent-cancel-button", WaitForSelectorOptions(Timeout=5000))
+            let! _ = declineButton.ClickAsync()
+            let! _ = ctx.Page.WaitForNavigationAsync()
+            return ctx
+        }).Result        
         
     let parseResult ctx =                  
         (task {            
@@ -105,16 +135,13 @@ module BrowserSteps =
             let! userInfo = ctx.Page.WaitForSelectorAsync("pre#userInfo")
             let! wellKnownOpenIdConfigurationValue = ctx.Page.EvaluateFunctionAsync("e => e.textContent", wellKnownOpenIdConfiguration)
             let! idTokenValue = ctx.Page.EvaluateFunctionAsync("e => e.textContent", idToken)
-            let! userInfoValue = ctx.Page.EvaluateFunctionAsync("e => e.textContent", userInfo)
-                                  
-            let x = JObject.Parse (idTokenValue.ToString())
-                                                                      
+            let! userInfoValue = ctx.Page.EvaluateFunctionAsync("e => e.textContent", userInfo)                                                                                                        
             return { ctx with
                          WellKnownOpenIdConfiguration = Some (wellKnownOpenIdConfigurationValue.ToString())
                          IdToken = Some (JObject.Parse (idTokenValue.ToString()))
                          UserInfo = Some (JObject.Parse (userInfoValue.ToString())) }
         }).Result
-
+        
 module BrowserTests =
     open BrowserSteps
     
@@ -234,7 +261,7 @@ module BrowserTests =
 }"""    
     
     [<Fact>]
-    let ``First time login`` () =
+    let ``First time successful login`` () =
         let ctx =
             setup "http://localhost:3000"
             |> initiateLogin
@@ -242,14 +269,11 @@ module BrowserTests =
             |> selectIdP "testidp1"
             |> loginAs "test001"
             |> confirmTwoFactorAuth
-            |> consentSharingWithRelyingParty
+            |> consentSharing
             |> parseResult
             |> teardown       
         
-        Assert.Equal(Some wellKnownOpenIdConfigurationExpected, ctx.WellKnownOpenIdConfiguration)
-        Assert.True(ctx.IdToken.IsSome)
-        Assert.True(ctx.UserInfo.IsSome)
-        
+        Assert.Equal(Some wellKnownOpenIdConfigurationExpected, ctx.WellKnownOpenIdConfiguration)       
         let idToken = ctx.IdToken.Value
         let userInfo = ctx.UserInfo.Value
         
@@ -261,6 +285,47 @@ module BrowserTests =
         ["txn"] |> List.iter (fun propertyName -> userInfo.Remove(propertyName) |> ignore)
         Assert.Equal(JObject.Parse(userInfoExpected).ToString(), userInfo.ToString())
 
+    [<Fact>]
+    let ``Select other bank`` () =
+        let ctx =
+            setup "http://localhost:3000"
+            |> initiateLogin
+            |> cookieConsent
+            |> selectIdP "testidp1"
+            |> selectOtherBank
+            |> teardown
+            
+        let url = ctx.Page.Url |> HttpUtility.UrlDecode
+        Assert.True(url.StartsWith("https://accounts.sandbox.yes.com/?client_id=sandbox.yes.com:e85ff3bc-96f8-4ae7-b6b1-894d8dde9ebe"))
+        Assert.True(url.EndsWith("prompt=select_account"))
         
+    [<Fact>]
+    let ``Decline second factor auth`` () =
+        let ctx =
+            setup "http://localhost:3000"
+            |> initiateLogin
+            |> cookieConsent
+            |> selectIdP "testidp1"
+            |> loginAs "test001"
+            |> declineSecondFactorAuth
+            |> teardown
+            
+        let actualUrl = ctx.Page.Url
+        let expectedUrl = "http://localhost:3000/yes/oidccb?error=access_denied&error_description=Access+denied+by+resource+owner+or+authorization+server&iss=https://testidp.sandbox.yes.com/issuer/10000001"
+        Assert.Equal(expectedUrl, actualUrl)
         
+    [<Fact>]
+    let ``Decline sharing`` () =
+        let ctx =
+            setup "http://localhost:3000"
+            |> initiateLogin
+            |> cookieConsent
+            |> selectIdP "testidp1"
+            |> loginAs "test001"
+            |> confirmTwoFactorAuth
+            |> declineSharing
+            |> teardown    
         
+        let actualUrl = ctx.Page.Url
+        let expectedUrl = "http://localhost:3000/yes/oidccb?error=access_denied&error_description=Access+denied+by+resource+owner+or+authorization+server&iss=https://testidp.sandbox.yes.com/issuer/10000001"
+        Assert.Equal(expectedUrl, actualUrl)
