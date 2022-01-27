@@ -5,4 +5,3 @@
 - Use .NET Logging to print out debug statements
 - Test what happens when selecting a bank causes timeout of session state
 - Convert yes response to strongly typed object
-- Avoid GetAwaiter().GetResult() in relying party
