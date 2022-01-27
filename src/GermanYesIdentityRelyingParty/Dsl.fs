@@ -158,7 +158,7 @@ module Dsl =
                         let parameters = assembleAuthorizationParameters sessionState'
                         Ok (sessionState', Uri $"%s{endpoint}&%s{parameters}"))
                 | _ -> return Error (YesSpecificationError $"Error: %A{error}, Issuer: %A{issuer}")
-        }            
+            }            
             
     type OidcCallbackError =
         | InvalidIssuer of actual: string * expected: string
@@ -324,7 +324,7 @@ module Dsl =
                         |> Result.bind (fun claims -> Ok (sessionState', claims))
                     | _ -> return Error (YesSpecificationError(response.StatusCode, responseBody))                                 
                 | None -> return failwith "Missing session state authorization code"
-            | None -> return failwith "Missing session state Oidc configuration"        
+            | None -> return failwith "Missing session state Oidc configuration"
         }
     
     /// Send the token request to the discovered issuer's UserInfo endpoint.            

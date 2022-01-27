@@ -68,7 +68,7 @@ type YesController () =
                 this.Response.Redirect(url.AbsoluteUri)
                 return RedirectResult(url.AbsoluteUri) :> IActionResult
             | Error s ->
-                return Helpers.respond HttpStatusCode.BadRequest $"%A{s}"  
+                return Helpers.respond HttpStatusCode.BadRequest $"%A{s}"
         }
          
     /// The user arrives at the OpenID Connect callback endpoint after going through the authentication/authorization
