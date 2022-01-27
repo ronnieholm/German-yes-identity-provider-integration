@@ -1,6 +1,6 @@
 {
   "profiles": {
-    "YesDotComRelayingParty": {
+    "GermanYesIdentityRelyingParty": {
       "commandName": "Project",
       "dotnetRunMessages": "true",
       "applicationUrl": "http://localhost:3000",
