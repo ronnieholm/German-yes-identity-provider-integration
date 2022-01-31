@@ -8,11 +8,11 @@ module Session =
     [<Literal>]
     let key = "yes"
     
-    let save (session: ISession) (state: Domain.IdentitySessionState) =
+    let save (session: ISession) (state: Configuration.IdentitySessionState) =
         session.SetString(key, JsonConvert.SerializeObject(state))        
 
-    let load (session: ISession): Domain.IdentitySessionState =
-        JsonConvert.DeserializeObject<Domain.IdentitySessionState>(session.GetString(key))
+    let load (session: ISession): Configuration.IdentitySessionState =
+        JsonConvert.DeserializeObject<Configuration.IdentitySessionState>(session.GetString(key))
 
 [<RequireQualifiedAccess>]
 module Dsl =
@@ -33,7 +33,7 @@ module Dsl =
     open Microsoft.IdentityModel.Tokens
     open Newtonsoft.Json.Linq      
     
-    let getAccountChooserUrl (sessionState: Domain.IdentitySessionState) (accountSelection: Domain.AccountSelection): Uri =
+    let getAccountChooserUrl (sessionState: Configuration.IdentitySessionState) (accountSelection: Configuration.AccountSelection): Uri =
         // When calling the account chooser, the state parameter is required. Compare this to the authorization request
         // where the state parameter is optional. With the account chooser, the state parameter serves the purpose of
         // nonce with the authorization request.
@@ -44,15 +44,15 @@ module Dsl =
         // While in case of NoPrompt we could pass "prompt=" but instead leave out the parameter entirely. 
         let accountChooserRedirectUrl' =
             match accountSelection with
-            | Domain.AccountSelection.Prompt -> $"%s{accountChooserRedirectUrl}&prompt=%s{accountSelection.String()}"
-            | Domain.AccountSelection.NoPrompt -> accountChooserRedirectUrl
+            | Configuration.AccountSelection.Prompt -> $"%s{accountChooserRedirectUrl}&prompt=%s{accountSelection.String()}"
+            | Configuration.AccountSelection.NoPrompt -> accountChooserRedirectUrl
         printfn $"Account chooser Url: %s{accountChooserRedirectUrl'}"
         Uri accountChooserRedirectUrl'
     
     /// Initial step when starting a yes identity flow is to construct the Url to call the account chooser and redirect
     /// the user to it.
-    let startIdentityFlow (sessionState: Domain.IdentitySessionState): Uri =
-        getAccountChooserUrl sessionState Domain.AccountSelection.NoPrompt
+    let startIdentityFlow (sessionState: Configuration.IdentitySessionState): Uri =
+        getAccountChooserUrl sessionState Configuration.AccountSelection.NoPrompt
                 
     [<Literal>]
     let WellKnownOpenIdConfiguration = "/.well-known/openid-configuration"
@@ -82,7 +82,7 @@ module Dsl =
         | YesSpecificationError of string
     
     /// Checks that the issuer_url points to a valid issuer in the yes ecosystem.
-    let checkIssuerUrl (sessionState: Domain.IdentitySessionState) (issuer: Uri): Task<Result<unit, AccountChooserCallbackError>> =
+    let checkIssuerUrl (sessionState: Configuration.IdentitySessionState) (issuer: Uri): Task<Result<unit, AccountChooserCallbackError>> =
         task {
             let issuerCheck = sessionState.Environment.Urls().IssuerCheckCallback
             let issuer' = HttpUtility.UrlEncode issuer.AbsoluteUri
@@ -111,13 +111,13 @@ module Dsl =
             let! response = client.GetAsync(metadataUrl)
             let! body = response.Content.ReadAsStringAsync()
             let body' = JObject.Parse(body)
-            let issuer' = Uri(body'.["issuer"].Value<string>())
+            let issuer' = Uri(body'["issuer"].Value<string>())
             if issuer <> issuer'
             then return Error (RetrieveOidcConfigurationFailed $"Issuer mismatch. Expected %s{issuer.AbsoluteUri}, got %s{issuer'.AbsoluteUri}")
             else return Ok body'
         }
                 
-    let assembleAuthorizationParameters (sessionState: Domain.IdentitySessionState): string =
+    let assembleAuthorizationParameters (sessionState: Configuration.IdentitySessionState): string =
         // From the sequence diagram in the Relying Party Developer Guide, Steps 13, 19, and 20, one gets the impression
         // that the state parameter is required. However, Section 3.2 Authentication Request specifies the state
         // parameter is optional. When we don't have an actual use for passing state in relying party, nonce suffices. 
@@ -134,7 +134,7 @@ module Dsl =
         printfn $"Authorization parameters query string: %s{queryString}"
         queryString
         
-    let handleAccountChooserCallback (sessionState: Domain.IdentitySessionState) (accountChooserState: Guid) (issuer: Uri option) (error: string option): Task<Result<Domain.IdentitySessionState * Uri, AccountChooserCallbackError>> =
+    let handleAccountChooserCallback (sessionState: Configuration.IdentitySessionState) (accountChooserState: Guid) (issuer: Uri option) (error: string option): Task<Result<Configuration.IdentitySessionState * Uri, AccountChooserCallbackError>> =
         task {
             if accountChooserState <> sessionState.AccountChooserState
             then return Error(InvalidAccountChooserState(accountChooserState, sessionState.AccountChooserState))
@@ -154,7 +154,7 @@ module Dsl =
                         // authorization_endpoint may contain parameters that must be preserved when calling the endpoint.
                         // For instance, in testing the n parameter is present:
                         // https://testidpui.sandbox.yes.com/services/authz/10000001?n=true.
-                        let endpoint = oidcConfiguration.["authorization_endpoint"].Value<string>()
+                        let endpoint = oidcConfiguration["authorization_endpoint"].Value<string>()
                         let parameters = assembleAuthorizationParameters sessionState'
                         Ok (sessionState', Uri $"%s{endpoint}&%s{parameters}"))
                 | _ -> return Error (YesSpecificationError $"Error: %A{error}, Issuer: %A{issuer}")
@@ -165,7 +165,7 @@ module Dsl =
         | OAuthError of error: string * description: string option
         | YesSpecificationError of string
             
-    let handleOidcCallback (sessionState: Domain.IdentitySessionState) (iss: Uri) (code: string option) (error: string option) (errorDescription: string option): Result<Domain.IdentitySessionState option * Uri option, OidcCallbackError> =
+    let handleOidcCallback (sessionState: Configuration.IdentitySessionState) (iss: Uri) (code: string option) (error: string option) (errorDescription: string option): Result<Configuration.IdentitySessionState option * Uri option, OidcCallbackError> =
         match sessionState.Issuer with
         | Some issuer ->
             if issuer <> iss then
@@ -178,7 +178,7 @@ module Dsl =
                     // another bank" button during the login flow. In accordance with the Relying Party Developer Guide,
                     // Section 3.4 Authentication Error Response, this error must trigger a forced bank selection in the
                     // account chooser.
-                    Ok (None, Some (getAccountChooserUrl sessionState Domain.AccountSelection.Prompt))
+                    Ok (None, Some (getAccountChooserUrl sessionState Configuration.AccountSelection.Prompt))
                 | None, Some error, _ ->
                     // In accordance with the OAuth 2.0 Authorization Error Response (https://datatracker.ietf.org/doc/html/rfc6749#section-4.1.2.1),
                     // OAuth 2.0 Error Response (https://datatracker.ietf.org/doc/html/rfc6749#section-5.2), and OIDC
@@ -199,7 +199,7 @@ module Dsl =
          | UserInfoRequestFailed of HttpStatusCode
          | YesSpecificationError of HttpStatusCode * body: string
             
-    let decodeAndValidateIdToken (sessionState: Domain.IdentitySessionState): Task<Result<JObject, ClaimsRequestError>> =
+    let decodeAndValidateIdToken (sessionState: Configuration.IdentitySessionState): Task<Result<Identity.IdToken, ClaimsRequestError>> =
         task {            
             match sessionState.Issuer with
             | Some issuer ->        
@@ -229,7 +229,7 @@ module Dsl =
                         ValidateLifetime = true,
                         TryAllIssuerSigningKeys = true)
                 let handler = JwtSecurityTokenHandler()
-                let idToken = sessionState.Tokens.Value.["id_token"].Value<string>()          
+                let idToken = sessionState.Jwt.Value["id_token"].Value<string>()          
                 try
                     let claimsPrincipal, securityToken = handler.ValidateToken(idToken, validationParameters)                    
                     let securityToken' = securityToken :?> JwtSecurityToken
@@ -244,8 +244,8 @@ module Dsl =
                                     |> fun p -> p.Value
                                 else claim.Type                    
                             shortType, claim.Value) |> dict
-                    let nonce = claims.["nonce"]
-                    let acr = claims.["acr"]
+                    let nonce = claims["nonce"]
+                    let acr = claims["acr"]
                     if securityToken'.SignatureAlgorithm <> "RS256" then return Error (IdTokenValidation $"Wrong signature algorithm. Got %s{securityToken'.SignatureAlgorithm}, expected RS256")
                     // To prevent CSRF attacks, the Relying Party Developer Guide, Section 3.2.4. Implementation Notes
                     // requires nonce and state (if present as it's optional) be associated with the originating user agent.
@@ -262,14 +262,14 @@ module Dsl =
                     else
                         let idTokenJson = handler.ReadJwtToken idToken
                         let payload = idTokenJson.Payload.SerializeToJson()
-                        return Ok (JObject.Parse(payload))                    
+                        return Ok (Identity.IdToken (JObject.Parse(payload)))                     
                 with e ->
                     return Error (IdTokenValidation $"%s{e.GetType().ToString()}: %s{e.Message}")
             | None ->
                 return failwith "Missing session state issuer"
         }
 
-    let getClientCertificate (sessionState: Domain.IdentitySessionState) =
+    let getClientCertificate (sessionState: Configuration.IdentitySessionState) =
         // Unexplained behavior: after sendTokenRequest has called this function for the first time, in sendUserInfoRequest
         // it's possible to follow the non-Windows path and the code still works on Windows. Either Windows internally
         // re-uses the underlying TCP connection or Windows recognizes and reuses the certificate, even though the
@@ -289,13 +289,13 @@ module Dsl =
                 Path.Combine(path', sessionState.RelyingPartyConfiguration.PrivateKeyFilePath))
                                 
     /// Send the token request to the discovered issuer's token endpoint.          
-    let sendTokenRequest (sessionState: Domain.IdentitySessionState): Task<Result<Domain.IdentitySessionState * JObject, ClaimsRequestError>> =
+    let sendTokenRequest (sessionState: Configuration.IdentitySessionState): Task<Result<Configuration.IdentitySessionState * Identity.IdToken, ClaimsRequestError>> =
         task {
             match sessionState.OidcConfiguration with
             | Some oidcConfiguration ->
                 match sessionState.AuthorizationCode with
                 | Some code ->                    
-                    let tokenEndpoint = oidcConfiguration.["token_endpoint"].Value<string>()
+                    let tokenEndpoint = oidcConfiguration["token_endpoint"].Value<string>()
                     let clientId = HttpUtility.UrlEncode sessionState.RelyingPartyConfiguration.ClientId
                     let redirectUri = HttpUtility.UrlEncode sessionState.RelyingPartyConfiguration.RedirectUrl.AbsoluteUri
                     let grantType = "authorization_code"
@@ -311,14 +311,14 @@ module Dsl =
                     | HttpStatusCode.BadRequest ->
                         // In accordance with the Relying Party Developer Guide, Section 3.7. Token Error Response.
                         let body' = JObject.Parse(responseBody)
-                        let error = body'.["error"].Value<string>()
+                        let error = body'["error"].Value<string>()
                         let description =
-                            if body'.["error_description"] <> null
-                            then Some (body'.["error_description"].Value<string>())
+                            if body'["error_description"] <> null
+                            then Some (body'["error_description"].Value<string>())
                             else None 
                         return Error (TokenRequestFailed(error, description))
                     | HttpStatusCode.OK ->
-                        let sessionState' = { sessionState with Tokens = Some (JObject.Parse(responseBody)) }
+                        let sessionState' = { sessionState with Jwt = Some (JObject.Parse(responseBody)) }
                         let! decodeAndValidateIdToken = decodeAndValidateIdToken sessionState'
                         return decodeAndValidateIdToken
                         |> Result.bind (fun claims -> Ok (sessionState', claims))
@@ -328,14 +328,14 @@ module Dsl =
         }
     
     /// Send the token request to the discovered issuer's UserInfo endpoint.            
-    let sendUserInfoRequest (sessionState: Domain.IdentitySessionState): Task<Result<JObject, ClaimsRequestError>> =
+    let sendUserInfoRequest (sessionState: Configuration.IdentitySessionState): Task<Result<Identity.UserInfo, ClaimsRequestError>> =
         task {
             match sessionState.OidcConfiguration with
             | Some oidcConfiguration ->            
-                match sessionState.Tokens with
-                | Some tokens ->
-                    let userinfoEndpoint = oidcConfiguration.["userinfo_endpoint"].Value<string>()
-                    let accessToken = tokens.["access_token"].Value<string>()
+                match sessionState.Jwt with
+                | Some jwt ->
+                    let userinfoEndpoint = oidcConfiguration["userinfo_endpoint"].Value<string>()
+                    let accessToken = jwt["access_token"].Value<string>()
                     use handler = new HttpClientHandler()
                     use certificate = getClientCertificate sessionState
                     handler.ClientCertificates.Add(certificate) |> ignore                        
@@ -346,7 +346,7 @@ module Dsl =
                     let! body = response.Content.ReadAsStringAsync()
                     match response.StatusCode with
                     | HttpStatusCode.BadRequest -> return Error (UserInfoRequestFailed(HttpStatusCode.BadRequest))
-                    | HttpStatusCode.OK -> return Ok (JObject.Parse(body))
+                    | HttpStatusCode.OK -> return Ok (Identity.UserInfo (JObject.Parse(body)))
                     | _ -> return Error (YesSpecificationError (response.StatusCode, body))
                 | None -> return failwith "Missing session state tokens"
             | None -> return failwith "Missing session state Oidc configuration"

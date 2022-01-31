@@ -41,7 +41,7 @@ type YesController () =
     /// Starts the yes identity flow after the user clicked the yes button.
     [<HttpGet>]
     member this.Start (): RedirectResult =
-        let sessionState = Domain.IdentitySessionState.Default()
+        let sessionState = Configuration.IdentitySessionState.Default()
         Session.save base.HttpContext.Session sessionState
         let accountChooserRedirectUrl = Dsl.startIdentityFlow sessionState
         base.Redirect(accountChooserRedirectUrl.ToString())
@@ -108,9 +108,9 @@ type YesController () =
                 responseBuilder.Append("<h3>ID token</h3>") |> ignore
                 let! sendTokenRequest = Dsl.sendTokenRequest sessionState' 
                 match sendTokenRequest with
-                | Ok (sessionState', oidcToken) ->                
+                | Ok (sessionState', Identity.IdToken idToken) ->                
                     Session.save this.HttpContext.Session sessionState'
-                    responseBuilder.Append($"<pre id='idToken'>%s{oidcToken.ToString()}</pre>") |> ignore 
+                    responseBuilder.Append($"<pre id='idToken'>%s{idToken.ToString()}</pre>") |> ignore  
                 | Error e ->
                     responseBuilder.Append($"%A{e}") |> ignore
 
@@ -118,7 +118,7 @@ type YesController () =
                 responseBuilder.Append("<h3>UserInfo</h3>") |> ignore
                 let! sendUserInfoRequest = Dsl.sendUserInfoRequest sessionState
                 match sendUserInfoRequest with
-                | Ok userInfo ->
+                | Ok (Identity.UserInfo userInfo) ->
                     responseBuilder.Append($"<pre id='userInfo'>%s{userInfo.ToString()}</pre>") |> ignore                                
                 | Error e ->
                     responseBuilder.Append($"%A{e}") |> ignore

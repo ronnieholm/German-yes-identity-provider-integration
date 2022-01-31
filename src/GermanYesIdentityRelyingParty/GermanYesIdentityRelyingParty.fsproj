@@ -11,7 +11,7 @@
     <None Include="key.pem">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <Compile Include="Domain.fs" />
+    <Compile Include="Types.fs" />
     <Compile Include="Dsl.fs" />
     <Compile Include="Web.fs" />
     <Compile Include="Startup.fs" />
