@@ -44,7 +44,7 @@ type YesController () =
         let sessionState = Configuration.IdentitySessionState.Default()
         Session.save base.HttpContext.Session sessionState
         let accountChooserRedirectUrl = Dsl.startIdentityFlow sessionState
-        base.Redirect(accountChooserRedirectUrl.ToString())
+        base.Redirect(string accountChooserRedirectUrl)
 
     // Workaround to bug in task computation expression. Calling through base results in a compilation error:
     // "A protected member is called or 'base' is being used"
@@ -110,7 +110,7 @@ type YesController () =
                 match sendTokenRequest with
                 | Ok (sessionState', Identity.IdToken idToken) ->                
                     Session.save this.HttpContext.Session sessionState'
-                    responseBuilder.Append($"<pre id='idToken'>%s{idToken.ToString()}</pre>") |> ignore  
+                    responseBuilder.Append($"<pre id='idToken'>%s{string idToken}</pre>") |> ignore  
                 | Error e ->
                     responseBuilder.Append($"%A{e}") |> ignore
 
@@ -119,11 +119,11 @@ type YesController () =
                 let! sendUserInfoRequest = Dsl.sendUserInfoRequest sessionState
                 match sendUserInfoRequest with
                 | Ok (Identity.UserInfo userInfo) ->
-                    responseBuilder.Append($"<pre id='userInfo'>%s{userInfo.ToString()}</pre>") |> ignore                                
+                    responseBuilder.Append($"<pre id='userInfo'>%s{string userInfo}</pre>") |> ignore                                
                 | Error e ->
                     responseBuilder.Append($"%A{e}") |> ignore
                 
-                return Helpers.respond HttpStatusCode.OK (responseBuilder.ToString())
+                return Helpers.respond HttpStatusCode.OK (string responseBuilder)
             | Ok (None, Some accountSelectionRequested) ->
                 return this.Redirect(accountSelectionRequested.AbsoluteUri) :> _
             | Error s ->

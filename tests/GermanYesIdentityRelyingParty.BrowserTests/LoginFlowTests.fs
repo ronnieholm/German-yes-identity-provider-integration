@@ -142,9 +142,9 @@ module BrowserTests =
             let! idTokenValue = ctx.Page.EvaluateFunctionAsync("e => e.textContent", idToken)
             let! userInfoValue = ctx.Page.EvaluateFunctionAsync("e => e.textContent", userInfo)                                                                                                        
             return { ctx with
-                         WellKnownOpenIdConfiguration = Some (wellKnownOpenIdConfigurationValue.ToString())
-                         IdToken = Some (JObject.Parse (idTokenValue.ToString()))
-                         UserInfo = Some (JObject.Parse (userInfoValue.ToString())) }
+                         WellKnownOpenIdConfiguration = Some (string wellKnownOpenIdConfigurationValue)
+                         IdToken = Some (JObject.Parse (string idTokenValue))
+                         UserInfo = Some (JObject.Parse (string userInfoValue)) }
         }
         
     let wellKnownOpenIdConfigurationExpected = "https://testidp.sandbox.yes.com/issuer/10000001/.well-known/openid-configuration"
@@ -282,10 +282,10 @@ module BrowserTests =
         // Remove parts of response that vary with each login.
         ["exp"; "iat"; "txn"; "nonce"]
         |> List.iter (fun propertyName -> idToken.Remove(propertyName) |> ignore)        
-        Assert.Equal(JObject.Parse(idTokenExpected).ToString(), idToken.ToString())        
+        Assert.Equal(string (JObject.Parse(idTokenExpected)), string idToken)        
 
         ["txn"] |> List.iter (fun propertyName -> userInfo.Remove(propertyName) |> ignore)
-        Assert.Equal(JObject.Parse(userInfoExpected).ToString(), userInfo.ToString())
+        Assert.Equal(string (JObject.Parse(userInfoExpected)), string userInfo)
     }
 
     [<Fact>]

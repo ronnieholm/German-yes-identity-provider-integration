@@ -39,7 +39,7 @@ module Dsl =
         // nonce with the authorization request.
         let accountChooserUrl = sessionState.Environment.Urls().AccountChooser.AbsoluteUri        
         let clientId = HttpUtility.UrlEncode sessionState.RelyingPartyConfiguration.ClientId
-        let accountChooserState = HttpUtility.UrlEncode (sessionState.AccountChooserState.ToString())
+        let accountChooserState = HttpUtility.UrlEncode (string sessionState.AccountChooserState)
         let accountChooserRedirectUrl = $"%s{accountChooserUrl}?client_id=%s{clientId}&state=%s{accountChooserState}"
         // While in case of NoPrompt we could pass "prompt=" but instead leave out the parameter entirely. 
         let accountChooserRedirectUrl' =
@@ -125,7 +125,7 @@ module Dsl =
         let redirectUri = HttpUtility.UrlEncode sessionState.RelyingPartyConfiguration.RedirectUrl.AbsoluteUri
         let scope = "openid"
         let responseType = "code"
-        let nonce = HttpUtility.UrlEncode (sessionState.OidcNonce.ToString())
+        let nonce = HttpUtility.UrlEncode (string sessionState.OidcNonce)
         // Leave out claims and we get back only the "user id" which translates to the sub claim. 
         let claims = HttpUtility.UrlEncode sessionState.ClaimsRequested
         // Leave out ACR value and TwoFactor is the default.
@@ -253,7 +253,7 @@ module Dsl =
                     // authentication response (in this function) and after the relying party receives the token response
                     // (in the sendTokenRequest function). The association or binding to the user agent is through the
                     // .AspNetCore.Session cookie.
-                    elif nonce <> sessionState.OidcNonce.ToString() then return Error (IdTokenValidation $"Wrong nonce in ID token. Got %s{nonce}, expected %s{sessionState.OidcNonce.ToString()}")
+                    elif nonce <> (string sessionState.OidcNonce) then return Error (IdTokenValidation $"Wrong nonce in ID token. Got %s{nonce}, expected %s{string sessionState.OidcNonce}")
                     // The Relying Party Developer Guide, Section 3.2.3. Authentication Policy allows for an identity
                     // provider to respond with a lower acr value than the one requested by the relying party. Given that
                     // acr values represent one factor and two factor only, only with two factor authentication can the
@@ -264,7 +264,7 @@ module Dsl =
                         let payload = idTokenJson.Payload.SerializeToJson()
                         return Ok (Identity.IdToken (JObject.Parse(payload)))                     
                 with e ->
-                    return Error (IdTokenValidation $"%s{e.GetType().ToString()}: %s{e.Message}")
+                    return Error (IdTokenValidation $"%s{string (e.GetType())}: %s{e.Message}")
             | None ->
                 return failwith "Missing session state issuer"
         }
