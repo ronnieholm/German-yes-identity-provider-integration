@@ -153,8 +153,8 @@ module BrowserTests =
   "verified_claims": {
     "claims": {
       "place_of_birth": {
-        "locality": "Berlin",
-        "country": "DE"
+        "country": "DE",
+        "locality": "Berlin"
       },
       "birthdate": "1950-01-01",
       "address": {
@@ -175,9 +175,17 @@ module BrowserTests =
       "trust_framework": "de_aml"
     }
   },
+  "birthdate": "1950-01-01",
+  "gender": "male",
+  "iss": "https://testidp.sandbox.yes.com/issuer/10000001",
+  "nationalities": [
+    "DE"
+  ],
+  "title": "Dr.",
+  "acr": "https://www.yes.com/acrs/online_banking_sca",
+  "email": "test001@platform.yes.com",
   "https://www.yes.com/claims/preferred_iban": "DE72100500000000000019",
   "email_verified": true,
-  "birthdate": "1950-01-01",
   "address": {
     "street_address": "Street1 1",
     "country": "DE",
@@ -186,25 +194,17 @@ module BrowserTests =
     "region": "Berlin",
     "postal_code": "10243"
   },
-  "gender": "male",
-  "iss": "https://testidp.sandbox.yes.com/issuer/10000001",
   "phone_number_verified": true,
-  "nationalities": [
-    "DE"
-  ],
   "given_name": "Given001",
-  "title": "Dr.",
   "https://www.yes.com/claims/tax_id": "1121081508150",
   "place_of_birth": {
-    "locality": "Berlin",
-    "country": "DE"
+    "country": "DE",
+    "locality": "Berlin"
   },
   "aud": "sandbox.yes.com:e85ff3bc-96f8-4ae7-b6b1-894d8dde9ebe",
-  "acr": "https://www.yes.com/acrs/online_banking_sca",
   "phone_number": "+49301111001",
   "salutation": "Herr",
-  "family_name": "Family001",
-  "email": "test001@platform.yes.com"
+  "family_name": "Family001"
 }"""
     let userInfoExpected = """{
   "sub": "f647f683-e46d-43bd-bc76-526d93429b86",
